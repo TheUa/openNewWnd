@@ -1,0 +1,49 @@
+    private class GoldCupWebChromeClient extends WebChromeClient {
+        @Override
+        public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+            super.onCreateWindow(view, isDialog, isUserGesture, resultMsg);
+            if (activity != null) {
+                final WebView newWebView = new WebView(activity) {
+                    @Override
+                    public boolean onCheckIsTextEditor() {
+                        return true;
+                    }
+                };
+                AlertDialog.Builder alert = new AlertDialog.Builder(activity);
+                newWebView.getSettings().setJavaScriptEnabled(true);
+                newWebView.getSettings().setPluginState(WebSettings.PluginState.ON);
+                newWebView.getSettings().setSupportMultipleWindows(true);
+                WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+                alert.setView(newWebView);
+                alert.setNegativeButton("Close", (dialog1, id) -> dialog1.dismiss());
+                AlertDialog dialog = alert.create();
+                dialog.show();
+                transport.setWebView(newWebView);
+                resultMsg.sendToTarget();
+
+                newWebView.setWebViewClient(new WebViewClient() {
+
+                    @Override
+                    public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                        if (request.getUrl().toString().contains("https://goldcup.com.u")) {
+                            dialog.dismiss();
+                            webView.reload();
+                            return true;
+                        }
+                        return super.shouldOverrideUrlLoading(view, request);
+                    }
+                });
+
+                newWebView.setWebChromeClient(new android.webkit.WebChromeClient() {
+                    @Override
+                    public void onCloseWindow(WebView window) {
+                        super.onCloseWindow(window);
+                        if (window != null) {
+                            newWebView.removeView(window);
+                        }
+                    }
+                });
+            }
+            return true;
+        }
+    }
